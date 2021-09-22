@@ -1,0 +1,19 @@
+apiVersion : apps/v1
+kind: Deployment
+metadata:
+  name: "syamaguchiaksclient2-8ed0"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: "syamaguchiaksclient2-8ed0"
+  template:
+    metadata:
+      labels:
+        app: "syamaguchiaksclient2-8ed0"
+    spec:
+      containers:
+        - name: "syamaguchiaksclient2-8ed0"
+          image: "daianatest.azurecr.io/syamaguchiaksclient2"
+          ports:
+          - containerPort: 3377
