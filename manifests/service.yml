@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+    name: "syamaguchiaksclient2-8ed0"
+    labels:
+        app: "syamaguchiaksclient2-8ed0"
+spec:
+    type: LoadBalancer
+    ports:
+    - port: 3377
+      targetPort: 3377
+      protocol: TCP
+      name: http
+    selector:
+        app: "syamaguchiaksclient2-8ed0"
