@@ -19,7 +19,10 @@ jobs:
           git branch -a
       - name: Merge head_ref into base_ref locally.
         run: |
+          git checkout ${{ github.head_ref }}
+          git log --oneline -n3
           git checkout ${{ github.base_ref }}
+          git log --oneline -n3
           git merge remotes/origin/${{ github.head_ref }} --no-edit
       - run: docker image ls
       - name: Create docker image for merged code.
@@ -43,8 +46,3 @@ jobs:
       #     echo "github.workspace=${{ github.workspace }}"
       #     echo "pwd=$(pwd)"
       # - run: echo "🍏 This job's status is ${{ job.status }}."
-  Branch-list:
-    runs-on: ubuntu-latest
-    steps:
-      - run: |
-          git branch -a
