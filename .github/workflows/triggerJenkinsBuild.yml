@@ -15,4 +15,4 @@ jobs:
         url: "https://syamguchi-appgw.japanwest.cloudapp.azure.com"
         user: "syamaguchi"
         token: ${{ secrets.JENKINS_SYAMAGUCHI_TOKEN }}
-      job: "GitHub-after-merge"
+        job: "GitHub-after-merge"
