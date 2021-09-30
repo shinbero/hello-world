@@ -1,0 +1,33 @@
+name: Image build and push.
+# on: [push]
+on:
+  pull_request:
+    branches:
+      - ${{ github.base_ref }}
+    types: [closed]
+jobs:
+  Image-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out to base_ref branch.
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.base_ref }}
+      - run: |
+          git branch -a
+      # - name: Check out base_ref branch.
+      #   uses: actions/checkout@v2
+      #   with:
+      #     ref: ${{ github.base_ref }}
+      # - run: |
+      #     git branch -a
+      - run: echo "ACR_DAIANATEST_PASSWORD=$ACR_DAIANATEST_PASSWORD"
+      - run: docker image ls
+      # - name: Create docker image for merged code.
+      #   run: |
+      #     docker image build -t tmp1:${{ github.repository }} .
+      # - run: docker image ls
+      # - run: 'docker container run -i tmp1:tmp1 sh /app/exec_unittests.sh'
+      # docker image build -t ${DOCKER_HUB_REPO}/${{ github.repository }}:${ghprbActualCommit} .
+      # sh 'docker container run -i ${DOCKER_HUB_REPO}/${ghprbGhRepository}:${ghprbActualCommit} sh ${UNITTEST_EXECUTE_SHELL_FPATH}'
+      # - run: echo "🍏 This job's status is ${{ job.status }}."

@@ -1,0 +1,46 @@
+name: Execute unittest ...
+# on: [push]
+on: [pull_request]
+jobs:
+  Image-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out head_ref branch.
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          # ref: ${{ github.head_ref }}
+      - run: |
+          git branch -a
+      # - name: Check out base_ref branch.
+      #   uses: actions/checkout@v2
+      #   with:
+      #     ref: ${{ github.base_ref }}
+      # - run: |
+      #     git branch -a
+      - name: Merge head_ref into base_ref locally.
+        run: |
+          git checkout ${{ github.base_ref }}
+          git merge remotes/origin/${{ github.head_ref }} --no-edit
+      - run: docker image ls
+      - name: Create docker image for merged code.
+        run: |
+          docker image build -t tmp1:tmp1 .
+      - run: docker image ls
+      - run: 'docker container run -i tmp1:tmp1 sh /app/exec_unittests.sh'
+      # docker image build -t ${DOCKER_HUB_REPO}/${{ github.repository }}:${ghprbActualCommit} .
+      # sh 'docker container run -i ${DOCKER_HUB_REPO}/${ghprbGhRepository}:${ghprbActualCommit} sh ${UNITTEST_EXECUTE_SHELL_FPATH}'
+      # - run: docker image ls
+      # - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
+      # - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
+      # - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+      # - name: Check out repository code
+      #   uses: actions/checkout@v2
+      # - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
+      # - run: echo "🖥️ The workflow is now ready to test your code on the runner."
+      # - name: List files in the repository
+      #   run: |
+      #     ls ${{ github.workspace }}
+      #     echo "github.workspace=${{ github.workspace }}"
+      #     echo "pwd=$(pwd)"
+      # - run: echo "🍏 This job's status is ${{ job.status }}."
