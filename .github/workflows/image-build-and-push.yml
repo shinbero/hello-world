@@ -15,9 +15,8 @@ jobs:
         uses: actions/checkout@v2
         with:
           ref: ${{ github.base_ref }}
-      - run: |
-          git branch -a
-      - run: echo $(date +"%Y-%m-%dT%H-%M%-S%Z")
+        # Note: Merge後のBaseブランチを用いてDocker imageを作りたいので、
+        #       base_refにcheckoutする。
       - name: Set env - git HEAD commit ID.
         run: |
           echo "COMMIT_ID=$(git rev-parse HEAD)" >> $GITHUB_ENV
