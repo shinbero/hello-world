@@ -9,6 +9,8 @@ jobs:
         uses: actions/checkout@v2
         with:
           ref: ${{ github.head_ref }}
+      - run: |
+          git branch -a
       - name: Check out base_ref branch.
         uses: actions/checkout@v2
         with:
@@ -18,7 +20,7 @@ jobs:
       - name: Merge head_ref into base_ref locally.
         run: |
           git checkout ${{ github.base_ref }}
-          git merge remotes/origin/${{ github.head_ref }}
+          git merge remotes/origin/${{ github.head_ref }} --no-edit
       - run: docker image ls
       - name: Create docker image for merged code.
         run: |
@@ -41,3 +43,8 @@ jobs:
       #     echo "github.workspace=${{ github.workspace }}"
       #     echo "pwd=$(pwd)"
       # - run: echo "🍏 This job's status is ${{ job.status }}."
+  Branch-list:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          git branch -a
