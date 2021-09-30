@@ -22,7 +22,16 @@ jobs:
       - name: Merge head_ref into base_ref locally.
         run: |
           git checkout ${{ github.base_ref }}
+          git merge ${{ github.head_ref }}
       - run: docker image ls
+      - name: Create docker image for merged code.
+        run: |
+          docker image build -t tmp1:tmp1 .
+      - run: docker image ls
+      - run: 'docker container run -i tmp1:tmp1 sh /app/exec_unittests.sh'
+      # docker image build -t ${DOCKER_HUB_REPO}/${{ github.repository }}:${ghprbActualCommit} .
+      # sh 'docker container run -i ${DOCKER_HUB_REPO}/${ghprbGhRepository}:${ghprbActualCommit} sh ${UNITTEST_EXECUTE_SHELL_FPATH}'
+      # - run: docker image ls
       # - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
       # - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
       # - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
