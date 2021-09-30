@@ -21,7 +21,9 @@ jobs:
       #     ref: ${{ github.base_ref }}
       # - run: |
       #     git branch -a
-      - run: echo "ACR_DAIANATEST_PASSWORD=$ACR_DAIANATEST_PASSWORD"
+      - run: |
+          echo "secrets.acr_daianatest_username=${{ secrets.acr_daianatest_username }}"
+          echo "secrets.acr_daianatest_password=${{ secrets.acr_daianatest_password }}"
       - run: docker image ls
       # - name: Create docker image for merged code.
       #   run: |
