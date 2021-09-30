@@ -15,19 +15,20 @@ jobs:
           ref: ${{ github.base_ref }}
       - run: |
           git branch -a
-      - run: |
-          echo "secrets.acr_daianatest_username=${{ secrets.acr_daianatest_username }}"
-          echo "secrets.acr_daianatest_password=${{ secrets.acr_daianatest_password }}"
       - run: docker image ls
       - name: Set git HEAD commit ID.
         run: |
           export COMMIT_ID=$(git rev-parse HEAD)
+          echo "::set-env name=COMMIT_ID::$COMMIT_ID"
           echo ${COMMIT_ID}
       - name: Set docker image name.
         run: |
-          export IMAGE_NAME=daianatest.azurecr.io/${{ github.repository }}:${COMMIT_ID}
+          # export IMAGE_NAME=daianatest.azurecr.io/${{ github.repository }}:${COMMIT_ID}
+          IMAGE_NAME=daianatest.azurecr.io/${{ github.repository }}:${COMMIT_ID}
+          echo "::set-env name=IMAGE_NAME::$IMAGE_NAME"
       - name: Build docker image for merged code.
         run: |
+          echo ${IMAGE_NAME}
           docker image build -t ${IMAGE_NAME} .
       - name: Login to ACR.
         run: |
