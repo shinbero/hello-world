@@ -15,19 +15,27 @@ jobs:
           ref: ${{ github.base_ref }}
       - run: |
           git branch -a
-      # - name: Check out base_ref branch
-      #   uses: actions/checkout@v2
-      #   with:
-      #     ref: ${{ github.base_ref }}
-      # - run: |
-      #     git branch -a
       - run: |
           echo "secrets.acr_daianatest_username=${{ secrets.acr_daianatest_username }}"
           echo "secrets.acr_daianatest_password=${{ secrets.acr_daianatest_password }}"
       - run: docker image ls
-      # - name: Create docker image for merged code.
-      #   run: |
-      #     docker image build -t tmp1:${{ github.repository }} .
+      - name: Set git HEAD commit ID.
+        run: |
+          export COMMIT_ID=$(git rev-parse HEAD)
+          echo ${COMMIT_ID}
+      - name: Set docker image name.
+        run: |
+          export IMAGE_NAME=daianatest.azurecr.io/${{ github.repository }}:${COMMIT_ID}
+      - name: Build docker image for merged code.
+        run: |
+          docker image build -t ${IMAGE_NAME} .
+      - name: Login to ACR.
+        run: |
+          docker login -u ${{ secrets.acr_daianatest_username }} -p ${{ secrets.acr_daianatest_password }}
+      - name: Push to ACR.
+        run: |
+          docker image push ${IMAGE_NAME}
+
       # - run: docker image ls
       # - run: 'docker container run -i tmp1:tmp1 sh /app/exec_unittests.sh'
       # docker image build -t ${DOCKER_HUB_REPO}/${{ github.repository }}:${ghprbActualCommit} .
