@@ -23,7 +23,7 @@ jobs:
           echo "COMMIT_ID=$(git rev-parse HEAD)" >> $GITHUB_ENV
       - name: Set env - docker image name.
         run: |
-          echo "IMAGE_NAME=${{ env.ACR_HOST }}/${{ github.repository }}:$(date +"%Y-%m-%dT%H-%M%-S%Z")-${{ env.COMMIT_ID }}" >> $GITHUB_ENV
+          echo "IMAGE_NAME=${{ env.ACR_HOST }}/${{ github.repository }}:$(date +"%Y-%m-%d_%H-%M-%S-%Z")-${{ env.COMMIT_ID }}" >> $GITHUB_ENV
       - name: Build docker image for merged code.
         run: |
           echo ${IMAGE_NAME}
