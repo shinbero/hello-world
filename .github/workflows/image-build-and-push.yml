@@ -15,7 +15,7 @@ jobs:
           ref: ${{ github.base_ref }}
       - run: |
           git branch -a
-      # - name: Check out base_ref branch.
+      # - name: Check out base_ref branch
       #   uses: actions/checkout@v2
       #   with:
       #     ref: ${{ github.base_ref }}
