@@ -12,6 +12,8 @@ jobs:
           echo "base_ref=${{ github.base_ref }}"
       - run: |
           git branch -a
+      - run: |
+          git checkout ${{ github.base_ref }}
       - run: docker image ls
       # - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
       # - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
