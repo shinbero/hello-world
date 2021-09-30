@@ -5,9 +5,13 @@ jobs:
   Explore-GitHub-Actions:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out repository code
+      - run: |
+          git branch -a
+      - name: Check out head_ref branch.
         uses: actions/checkout@v2
-      - name: Check out main branch.
+          with:
+          ref: ${{ github.head_ref }}
+      - name: Check out base_ref branch.
         uses: actions/checkout@v2
         with:
           ref: ${{ github.base_ref }}
