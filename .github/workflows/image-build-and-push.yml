@@ -2,9 +2,7 @@ name: Image build and push.
 on:
   pull_request:
     branches:
-      # - ${{ github.base_ref }}
       - main
-      # test...
     types: [closed]
 jobs:
   Image-build:
