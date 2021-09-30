@@ -8,8 +8,8 @@ jobs:
       - run: |
           git branch -a
       - name: Check out head_ref branch.
-        uses: actions/checkout@v2
-          with:
+        uses: actions/checkout@v2/
+        with:
           ref: ${{ github.head_ref }}
       - name: Check out base_ref branch.
         uses: actions/checkout@v2
