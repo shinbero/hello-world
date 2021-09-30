@@ -17,23 +17,23 @@ jobs:
           ref: ${{ github.base_ref }}
       - run: |
           git branch -a
-      - run: docker image ls
-      - name: Set git HEAD commit ID.
-        run: |
-          echo "COMMIT_ID=$(git rev-parse HEAD)" >> $GITHUB_ENV
-      - name: Set docker image name.
-        run: |
-          echo "IMAGE_NAME=${{ env.ACR_HOST }}/${{ github.repository }}:${{ env.COMMIT_ID }}" >> $GITHUB_ENV
-      - name: Build docker image for merged code.
-        run: |
-          echo ${IMAGE_NAME}
-          docker image build -t ${{ env.IMAGE_NAME }} .
-      - name: Login to ACR.
-        run: |
-          docker login ${{ env.ACR_HOST }} -u ${{ secrets.acr_daianatest_username }} -p ${{ secrets.acr_daianatest_password }}
-      - name: Push to ACR.
-        run: |
-          docker image push ${{ env.IMAGE_NAME }}
+      - run: echo $(date +"%Y-%m-%d_%H%M%S%Z")
+      # - name: Set git HEAD commit ID.
+      #   run: |
+      #     echo "COMMIT_ID=$(git rev-parse HEAD)" >> $GITHUB_ENV
+      # - name: Set docker image name.
+      #   run: |
+      #     echo "IMAGE_NAME=${{ env.ACR_HOST }}/${{ github.repository }}:${{ env.COMMIT_ID }}" >> $GITHUB_ENV
+      # - name: Build docker image for merged code.
+      #   run: |
+      #     echo ${IMAGE_NAME}
+      #     docker image build -t ${{ env.IMAGE_NAME }} .
+      # - name: Login to ACR.
+      #   run: |
+      #     docker login ${{ env.ACR_HOST }} -u ${{ secrets.acr_daianatest_username }} -p ${{ secrets.acr_daianatest_password }}
+      # - name: Push to ACR.
+      #   run: |
+      #     docker image push ${{ env.IMAGE_NAME }}
 
       # - run: docker image ls
       # - run: 'docker container run -i tmp1:tmp1 sh /app/exec_unittests.sh'
