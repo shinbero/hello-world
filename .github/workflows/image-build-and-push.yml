@@ -1,4 +1,4 @@
-name: Execute unittest ...
+name: Image build and push.
 # on: [push]
 on:
   pull_request:
