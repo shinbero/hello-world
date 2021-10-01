@@ -14,6 +14,8 @@ jobs:
       - name: Merge head_ref into base_ref locally.
         run: |
           git checkout ${{ github.base_ref }}
+          git config --global user.name "tmp"
+          git config --global user.email "tmp@example.com"
           git merge remotes/origin/${{ github.head_ref }} --no-edit
       - name: Load Dockerfile base image name.
         run: |
