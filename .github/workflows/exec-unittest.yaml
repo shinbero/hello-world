@@ -25,6 +25,9 @@ jobs:
           export env_IMAGE_REGISTRY=${{ env.DOCKER_REGISTRY }}
           . base_image_config.sh # 'BASE_IMAGE' variable will be set.
           echo "BASE_IMAGE=$BASE_IMAGE" >> $GITHUB_ENV
+      - name: Login to ACR.
+        run: |
+          docker login ${{ env.DOCKER_REGISTRY }} -u ${{ secrets.acr_daianatest_username }} -p ${{ secrets.acr_daianatest_password }}
       - name: Create docker image for merged code.
         run: |
           cd mod_1
