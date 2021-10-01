@@ -27,6 +27,7 @@ jobs:
           echo "BASE_IMAGE=$BASE_IMAGE" >> $GITHUB_ENV
       - name: Create docker image for merged code.
         run: |
+          cd mod_1
           docker image build -t tmp1:tmp1 --build-arg base_image=${{ env.BASE_IMAGE }} .
       - name: Run unittest using merged code.
         run: 'docker container run -i tmp1:tmp1 sh /app/exec_unittests.sh'
