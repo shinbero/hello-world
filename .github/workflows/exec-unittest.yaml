@@ -1,8 +1,8 @@
-name: Execute unittest ...
+name: Execute unittest
 # on: [push]
 on: [pull_request]
 jobs:
-  Image-build:
+  execute-unittest:
     runs-on: ubuntu-latest
     steps:
       - name: Check out head_ref branch.
@@ -19,6 +19,7 @@ jobs:
           git merge remotes/origin/${{ github.head_ref }} --no-edit
       - name: Load Dockerfile base image name.
         run: |
+          cd mod_1
           . base_image_config.sh # 'BASE_IMAGE' variable will be set.
           echo "BASE_IMAGE=$BASE_IMAGE" >> $GITHUB_ENV
       - name: Create docker image for merged code.
