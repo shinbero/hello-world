@@ -4,6 +4,8 @@ on: [pull_request]
 jobs:
   execute-unittest:
     runs-on: ubuntu-latest
+    env:
+      DOCKER_REGISTRY: daianatest.azurecr.io
     steps:
       - name: Check out head_ref branch.
         uses: actions/checkout@v2
@@ -20,6 +22,7 @@ jobs:
       - name: Load Dockerfile base image name.
         run: |
           cd mod_1
+          export env_IMAGE_REGISTRY=${{ env.DOCKER_REGISTRY }}
           . base_image_config.sh # 'BASE_IMAGE' variable will be set.
           echo "BASE_IMAGE=$BASE_IMAGE" >> $GITHUB_ENV
       - name: Create docker image for merged code.
