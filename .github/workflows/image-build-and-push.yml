@@ -7,7 +7,7 @@ jobs:
   Image-build:
     runs-on: ubuntu-latest
     env:
-      ACR_HOST: daianatest.azurecr.io
+      DOCKER_REGISTRY: daianatest.azurecr.io
     steps:
       - name: Check out to base_ref branch.
         uses: actions/checkout@v2
@@ -20,13 +20,13 @@ jobs:
           echo "COMMIT_ID=$(git rev-parse HEAD)" >> $GITHUB_ENV
       - name: Set env - docker image name.
         run: |
-          echo "IMAGE_NAME=${{ env.ACR_HOST }}/${{ github.repository }}:$(date +"%Y-%m-%d_%H-%M-%S-%Z")-${{ env.COMMIT_ID }}" >> $GITHUB_ENV
+          echo "IMAGE_NAME=${{ env.DOCKER_REGISTRY }}/${{ github.repository }}:$(date +"%Y-%m-%d_%H-%M-%S-%Z")-${{ env.COMMIT_ID }}" >> $GITHUB_ENV
       - name: Build docker image for merged code.
         run: |
           docker image build -t ${{ env.IMAGE_NAME }} .
       - name: Login to ACR.
         run: |
-          docker login ${{ env.ACR_HOST }} -u ${{ secrets.acr_daianatest_username }} -p ${{ secrets.acr_daianatest_password }}
+          docker login ${{ env.DOCKER_REGISTRY }} -u ${{ secrets.acr_daianatest_username }} -p ${{ secrets.acr_daianatest_password }}
       - name: Push to ACR.
         run: |
           docker image push ${{ env.IMAGE_NAME }}
