@@ -24,7 +24,7 @@ jobs:
           diff_result=$(git diff --name-only \
             remotes/origin/${{ github.base_ref }} \
             remotes/origin/${{ github.head_ref }} \
-            | grep -E '$${{ matrix.test_target_mod }}/.*' \
+            | grep -E '^${{ matrix.test_target_mod }}/.*' \
             || true)
           if [ ! -z "$diff_result" ]; then
             HAS_DIFF='1'
