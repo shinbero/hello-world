@@ -12,11 +12,6 @@ jobs:
     env:
       DOCKER_REGISTRY: daianatest.azurecr.io
     steps:
-      - name: Login to ACR.
-        run: |
-          docker login ${{ env.DOCKER_REGISTRY }} \
-            -u ${{ secrets.acr_daianatest_username }} \
-            -p ${{ secrets.acr_daianatest_password }}
       - name: Check out head_ref branch.
         uses: actions/checkout@v2
         with:
@@ -26,19 +21,18 @@ jobs:
           git branch -a
       - name: Check the mod has diff.
         run: |
-          grep_result=$(git diff --name-only \
+          diff_result=$(git diff --name-only \
             remotes/origin/${{ github.base_ref }} \
             remotes/origin/${{ github.head_ref }} \
-            | grep ${{ matrix.test_target_mod }} \
+            | grep -E './${{ matrix.test_target_mod }}/.*' \
             || true)
-          if [ ! -z "$grep_result" ]; then
+          if [ ! -z "$diff_result" ]; then
             HAS_DIFF='1'
           else
             HAS_DIFF='0'
           fi
           echo HAS_DIFF=${HAS_DIFF}
           echo "HAS_DIFF=$HAS_DIFF" >> $GITHUB_ENV
-
       - name: Merge head_ref into base_ref locally.
         if: ${{ env.HAS_DIFF == '1' }}
         run: |
@@ -52,6 +46,11 @@ jobs:
           cd ${{ matrix.test_target_mod }}
           BASE_IMAGE=$( ./get_base_image.sh "${{ env.DOCKER_REGISTRY }}" )
           echo "BASE_IMAGE=$BASE_IMAGE" >> $GITHUB_ENV
+      - name: Login to ACR.
+        run: |
+          docker login ${{ env.DOCKER_REGISTRY }} \
+            -u ${{ secrets.acr_daianatest_username }} \
+            -p ${{ secrets.acr_daianatest_password }}
       - name: Create docker image for merged code.
         if: ${{ env.HAS_DIFF == '1' }}
         run: |
@@ -120,13 +119,3 @@ jobs:
         # 本Jobも失敗させる。
         if: ${{ env.DID_UNITTEST == '1' && needs.execute-unittest-and-upload.result == 'failure' }}
         run: exit 1
-
-      # TODO:
-      # Daianaのように、複数の独立したモジュールを１つのリポジトリで管理している場合、
-      # PRの際に、１部のモジュールのみが開発対象となっている場合があり得る。
-      # その際、以下の３つの作業は変更がないモジュールに対しては実施する必要がない。
-      # ・全てのモジュールのコードをDocker image化してテストする
-      # ・全てのモジュールのコードをDocker image化してACRにpushする
-      # ・全てのモジュールのコードのManifestを更新する
-      # そこで、変更が発生したディレクトリ名（トップディレクトリ直下に各モジュールのディレクトリがある前提）
-      # を取得し、変更があったモジュールのみ、上記３ポチを実施するようにする。

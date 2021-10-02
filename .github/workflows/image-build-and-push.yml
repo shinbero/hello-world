@@ -1,6 +1,7 @@
 name: Image build and push.
 on:
   # mainブランチにPRがmergeされる際にトリガーされる。
+  # つまり、mergeが完了したタイミングでJobが走る。
   push:
     branches:
       - main
@@ -18,21 +19,42 @@ jobs:
       - name: Check out to base_ref branch.
         uses: actions/checkout@v2
         with:
-          ref: ${{ github.base_ref }}
           # Note: Merge後のBaseブランチを用いてDocker imageを作りたいので、
           #       base_refにcheckoutする。
+          ref: ${{ github.base_ref }}
+
+          # Mergeの１つ前の状態も確認するため、depth=2とする.
+          fetch-depth: 2
+      - name: Check the mod has diff.
+        run: |
+          diff_result=$(git diff --name-only \
+            HEAD~ \
+            | grep -E './${{ matrix.test_target_mod }}/.*' \
+            || true)
+          if [ ! -z "$diff_result" ]; then
+            HAS_DIFF='1'
+          else
+            HAS_DIFF='0'
+          fi
+          echo HAS_DIFF=${HAS_DIFF}
+          echo "HAS_DIFF=$HAS_DIFF" >> $GITHUB_ENV
       - name: Set env - git HEAD commit ID.
+        if: ${{ env.HAS_DIFF == '1' }}
         run: |
           echo "COMMIT_ID=$(git rev-parse HEAD)" >> $GITHUB_ENV
       - name: Set env - docker image name.
+        if: ${{ env.HAS_DIFF == '1' }}
         run: |
-          echo "IMAGE_NAME=${{ env.DOCKER_REGISTRY }}/${{ github.repository }}:$(date +"%Y-%m-%d_%H-%M-%S-%Z")-${{ env.COMMIT_ID }}" >> $GITHUB_ENV
+          echo "IMAGE_NAME=${{ env.DOCKER_REGISTRY }}/${{ github.repository }}/${{ matrix.test_target_mod }}:$(date +"%Y-%m-%d_%H-%M-%S-%Z")-${{ env.COMMIT_ID }}" >> $GITHUB_ENV
       - name: Build docker image for merged code.
+        if: ${{ env.HAS_DIFF == '1' }}
         run: |
           docker image build -t ${{ env.IMAGE_NAME }} .
       - name: Login to ACR.
+        if: ${{ env.HAS_DIFF == '1' }}
         run: |
           docker login ${{ env.DOCKER_REGISTRY }} -u ${{ secrets.acr_daianatest_username }} -p ${{ secrets.acr_daianatest_password }}
       - name: Push to ACR.
+        if: ${{ env.HAS_DIFF == '1' }}
         run: |
           docker image push ${{ env.IMAGE_NAME }}
