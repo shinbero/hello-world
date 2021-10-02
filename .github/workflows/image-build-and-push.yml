@@ -63,7 +63,6 @@ jobs:
           docker image build \
             -t ${{ env.IMAGE_NAME }} \
             --build-arg base_image=${{ env.BASE_IMAGE }} .
-            .
       - name: Push to ACR.
         if: ${{ env.HAS_DIFF == '1' }}
         run: |
