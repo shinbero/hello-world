@@ -4,7 +4,7 @@ ENV APP_ROOT_DIR /app
 
 COPY ./docker-entrypoint.sh /
 COPY src ${APP_ROOT_DIR}/src
-COPY exec_unittests.sh exec_code_review.sh ${APP_ROOT_DIR}
+COPY exec_unittests.sh exec_code_review.sh ${APP_ROOT_DIR}/
 
 ENTRYPOINT ["/docker-entrypoint.sh"]
 
