@@ -113,6 +113,9 @@ jobs:
         with:
           files: artifacts/**/*.xml
 
+      - name: Check all unittest succeeded.
+        if: ${{ env.DID_UNITTEST == '1' && needs.execute-unittest-and-upload.result == 'failure' }}
+        run: exit 1
 
       # TODO:
       # Daianaのように、複数の独立したモジュールを１つのリポジトリで管理している場合、
