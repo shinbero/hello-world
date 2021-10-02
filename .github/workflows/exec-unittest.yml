@@ -2,8 +2,13 @@ name: Execute unittest
 # on: [push]
 on: [pull_request]
 jobs:
-  execute-unittest-after-merge-locally:
+  execute-unittest-and-upload:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        test_target_mod:
+          - mod_1
+          - mod_2
     env:
       DOCKER_REGISTRY: daianatest.azurecr.io
     steps:
@@ -19,24 +24,36 @@ jobs:
       - name: Show all branches.
         run: |
           git branch -a
+      - name: Check the mod has diff.
+        run: |
+          git diff remotes/origin/${{ github.base_ref }} remotes/origin/${{ github.head_ref }} --name-only \
+            | grep ${{ matrix.test_target_mod }}
+          if [ $? -eq 0 ]; then
+            HAS_DIFF='1'
+          else
+            HAS_DIFF='0'
+          fi
+          echo HAS_DIFF=${HAS_DIFF}
+          echo "HAS_DIFF=$HAS_DIFF" >> $GITHUB_ENV
+
       - name: Merge head_ref into base_ref locally.
+        if: ${{ env.HAS_DIFF == '1' }}
         run: |
           git checkout ${{ github.base_ref }}
           git config --global user.name "tmp"
           git config --global user.email "tmp@example.com"
           git merge remotes/origin/${{ github.head_ref }} --no-edit
       - name: Load Dockerfile base image name.
+        if: ${{ env.HAS_DIFF == '1' }}
         run: |
-          cd mod_1
-          # export env_IMAGE_REGISTRY=${{ env.DOCKER_REGISTRY }}
-          # ('BASE_IMAGE' variable will be set.)
+          cd ${{ matrix.test_target_mod }}
           BASE_IMAGE=$( ./get_base_image.sh "${{ env.DOCKER_REGISTRY }}" )
-          # env_IMAGE_REGISTRY=${{ env.DOCKER_REGISTRY }} . base_image_config.sh
           echo "BASE_IMAGE=$BASE_IMAGE" >> $GITHUB_ENV
       - name: Create docker image for merged code.
+        if: ${{ env.HAS_DIFF == '1' }}
         run: |
           # TODO: 変更があったモジュールをリストし、そこに対してループ処理でunittestする.
-          cd mod_1
+          cd ${{ matrix.test_target_mod }}
           UNITTEST_IMAGE=tmp_unittest_image:1.0
           echo "UNITTEST_IMAGE=$UNITTEST_IMAGE" >> $GITHUB_ENV
 
@@ -44,6 +61,7 @@ jobs:
             -t ${UNITTEST_IMAGE} \
             --build-arg base_image=${{ env.BASE_IMAGE }} .
       - name: Run unittest.
+        if: ${{ env.HAS_DIFF == '1' }}
         run: |
           UNITTEST_RESULT_DIR_IN_HOST=$(pwd)/unittest-result
           UNITTEST_RESULT_DIR_IN_CONTAINER=/unittest-result
@@ -54,11 +72,36 @@ jobs:
             -v "${UNITTEST_RESULT_DIR_IN_HOST}":"${UNITTEST_RESULT_DIR_IN_CONTAINER}" \
             ${{ env.UNITTEST_IMAGE }} \
             unittest "${UNITTEST_RESULT_DIR_IN_CONTAINER}"
-      - name: Publish unit test result.
-        uses: EnricoMi/publish-unit-test-result-action@v1
-        if: always()
+
+      - name: Upload Unit Test Results
+        if: ${{ env.HAS_DIFF == '1' }}
+        # if: always()
+        uses: actions/upload-artifact@v2
         with:
-          files: ${{ env.UNITTEST_RESULT_DIR }}/**/*.xml
+          name: unittest-results-${{ matrix.test_target_mod }}
+          path: ${{ env.UNITTEST_RESULT_DIR }}  
+
+  publish-test-results:
+    needs: execute-unittest-and-upload
+    runs-on: ubuntu-latest
+    # if: always()
+
+    steps:
+      - name: Download Artifacts
+        uses: actions/download-artifact@v2
+        with:
+          path: artifacts
+
+      - name: List downloaded artifacts
+        run: |
+          pwd
+          ls -aR artifacts/
+
+      - name: Publish Unit Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v1
+        with:
+          files: artifacts/**/*.xml
+
 
       # TODO:
       # unittestが失敗したときに、workflowも失敗したことにしたい。
