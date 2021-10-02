@@ -2,11 +2,16 @@ name: Execute unittest
 # on: [push]
 on: [pull_request]
 jobs:
-  execute-unittest:
+  execute-unittest-after-merge-locally:
     runs-on: ubuntu-latest
     env:
       DOCKER_REGISTRY: daianatest.azurecr.io
     steps:
+      - name: Login to ACR.
+        run: |
+          docker login ${{ env.DOCKER_REGISTRY }} \
+            -u ${{ secrets.acr_daianatest_username }} \
+            -p ${{ secrets.acr_daianatest_password }}
       - name: Check out head_ref branch.
         uses: actions/checkout@v2
         with:
@@ -20,23 +25,34 @@ jobs:
           git config --global user.name "tmp"
           git config --global user.email "tmp@example.com"
           git merge remotes/origin/${{ github.head_ref }} --no-edit
-      - name: Load Dockerfile base image name. ('BASE_IMAGE' variable will be set.)
+      - name: Load Dockerfile base image name.
         run: |
           cd mod_1
-          export env_IMAGE_REGISTRY=${{ env.DOCKER_REGISTRY }}
-          . base_image_config.sh
+          # export env_IMAGE_REGISTRY=${{ env.DOCKER_REGISTRY }}
+          # ('BASE_IMAGE' variable will be set.)
+          BASE_IMAGE=$( sh get_base_image.sh "${{ env.DOCKER_REGISTRY }}" )
+          # env_IMAGE_REGISTRY=${{ env.DOCKER_REGISTRY }} . base_image_config.sh
           echo "BASE_IMAGE=$BASE_IMAGE" >> $GITHUB_ENV
-      - name: Login to ACR.
-        run: |
-          docker login ${{ env.DOCKER_REGISTRY }} \
-            -u ${{ secrets.acr_daianatest_username }} \
-            -p ${{ secrets.acr_daianatest_password }}
       - name: Create docker image for merged code.
         run: |
+          # TODO: 変更があったモジュールをリストし、そこに対してループ処理でunittestする.
           cd mod_1
-          docker image build -t tmp1:tmp1 --build-arg base_image=${{ env.BASE_IMAGE }} .
-      - name: Run unittest using merged code.
-        run: 'docker container run -i tmp1:tmp1 sh /app/exec_unittests.sh'
+          UNITTEST_IMAGE=tmp_unittest_image:1.0
+          echo "UNITTEST_IMAGE=$UNITTEST_IMAGE" >> $GITHUB_ENV
+
+          docker image build \
+            -t ${UNITTEST_IMAGE} \
+            --build-arg base_image=${{ env.BASE_IMAGE }} .
+      - name: Run unittest.
+        run: |
+          UNITTEST_RESULT_DIR_IN_HOST=$(pwd)/unittest-result
+          UNITTEST_RESULT_DIR_IN_CONTAINER=/unittest-result
+          mkdir -p "${UNITTEST_RESULT_DIR_IN_HOST}"
+          docker container run \
+            -i \
+            -v "${UNITTEST_RESULT_DIR_IN_HOST}":"${UNITTEST_RESULT_DIR}" \
+            ${{ env.UNITTEST_IMAGE }} \
+            unittest "${UNITTEST_RESULT_DIR}"
       # TODO:
       # unittestが失敗したときに、workflowも失敗したことにしたい。
 
