@@ -114,6 +114,10 @@ jobs:
           files: artifacts/**/*.xml
 
       - name: Check all unittest succeeded.
+        # Branch protection ruleにて、Unitttestをすべき開発/しなくて良い開発に依らず、
+        # 必ず走るjobの結果を参照させるために、本Job(publish-test-results)を参照させる。
+        # その為、unittestが走った時の失敗についても本jobで感知し、Unittestが失敗していた場合は、
+        # 本Jobも失敗させる。
         if: ${{ env.DID_UNITTEST == '1' && needs.execute-unittest-and-upload.result == 'failure' }}
         run: exit 1
 

@@ -19,6 +19,6 @@ class TestAdd2(unittest.TestCase):
     def test_pass_4(self):
         """引数3を渡した時の動作をテスト."""
         actual = self.tested_func(4)
-        expected = 7
+        expected = 6
 
         self.assertEqual(actual, expected)
