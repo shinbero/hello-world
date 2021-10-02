@@ -48,11 +48,18 @@ jobs:
           UNITTEST_RESULT_DIR_IN_HOST=$(pwd)/unittest-result
           UNITTEST_RESULT_DIR_IN_CONTAINER=/unittest-result
           mkdir -p "${UNITTEST_RESULT_DIR_IN_HOST}"
+          echo "UNITTEST_RESULT_DIR=$UNITTEST_RESULT_DIR_IN_HOST" >> $GITHUB_ENV
           docker container run \
             -i \
             -v "${UNITTEST_RESULT_DIR_IN_HOST}":"${UNITTEST_RESULT_DIR_IN_CONTAINER}" \
             ${{ env.UNITTEST_IMAGE }} \
-            unittest "${UNITTEST_RESULT_DIR}"
+            unittest "${UNITTEST_RESULT_DIR_IN_CONTAINER}"
+      - name: Publish unit test result.
+        uses: EnricoMi/publish-unit-test-result-action@v1
+        if: always()
+        with:
+          files: ${{ env.UNITTEST_RESULT_DIR }}/**/*.xml
+
       # TODO:
       # unittestが失敗したときに、workflowも失敗したことにしたい。
 
