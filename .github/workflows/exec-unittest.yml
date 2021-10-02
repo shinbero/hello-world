@@ -112,7 +112,7 @@ jobs:
         with:
           files: artifacts/**/*.xml
 
-      - name: Check all unittest succeeded.
+      - name: Check any failed unittest exists.
         # Branch protection ruleにて、Unitttestをすべき開発/しなくて良い開発に依らず、
         # 必ず走るjobの結果を参照させるために、本Job(publish-test-results)を参照させる。
         # その為、unittestが走った時の失敗についても本jobで感知し、Unittestが失敗していた場合は、
