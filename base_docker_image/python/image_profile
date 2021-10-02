@@ -1,0 +1,7 @@
+# Base imageは、DockerfileのFROMで利用されるdocker imageであり、
+# docker hub等で公式に配布されているものを意味する。
+profile_BASE_IMAGE_REPOSITORY=python
+profile_BASE_IMAGE_TAG=3.9.7-alpine3.14
+
+# Buildの結果のタグ.
+profile_RESULT_IMAGE_TAG=${profile_BASE_IMAGE_TAG}-1.0
