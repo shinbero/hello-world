@@ -49,6 +49,7 @@ jobs:
       - name: Build docker image for merged code.
         if: ${{ env.HAS_DIFF == '1' }}
         run: |
+          cd ${{ matrix.test_target_mod }}
           docker image build -t ${{ env.IMAGE_NAME }} .
       - name: Login to ACR.
         if: ${{ env.HAS_DIFF == '1' }}
