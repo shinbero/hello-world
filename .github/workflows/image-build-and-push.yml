@@ -29,7 +29,7 @@ jobs:
         run: |
           diff_result=$(git diff --name-only \
             HEAD~ \
-            | grep -E './${{ matrix.test_target_mod }}/.*' \
+            | grep -E '^${{ matrix.test_target_mod }}/.*' \
             || true)
           if [ ! -z "$diff_result" ]; then
             HAS_DIFF='1'
