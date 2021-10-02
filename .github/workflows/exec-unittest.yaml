@@ -6,7 +6,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        test_target_mods:
+        test_target_mod:
           - mod_1
           - mod_2
     env:
