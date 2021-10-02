@@ -77,7 +77,7 @@ jobs:
             unittest "${UNITTEST_RESULT_DIR_IN_CONTAINER}"
 
       - name: Upload Unit Test Results
-        if: ${{ env.HAS_DIFF == '1' }}
+        if: ${{ env.HAS_DIFF == '1' && always() }}
         uses: actions/upload-artifact@v2
         with:
           name: unittest-results-${{ matrix.test_target_mod }}
