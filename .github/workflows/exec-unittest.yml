@@ -82,7 +82,6 @@ jobs:
           path: ${{ env.UNITTEST_RESULT_DIR }}  
 
   publish-test-results:
-    name: "Publish Unit Tests Results"
     needs: execute-unittest-and-upload
     runs-on: ubuntu-latest
     # if: always()
