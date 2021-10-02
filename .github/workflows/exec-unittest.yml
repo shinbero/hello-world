@@ -63,7 +63,7 @@ jobs:
       - name: Run unittest.
         if: ${{ env.HAS_DIFF == '1' }}
         run: |
-          UNITTEST_RESULT_DIR_IN_HOST=$(pwd)/unittest-result-${{ matrix.test_target_mod }}
+          UNITTEST_RESULT_DIR_IN_HOST=$(pwd)/unittest-result
           UNITTEST_RESULT_DIR_IN_CONTAINER=/unittest-result
           mkdir -p "${UNITTEST_RESULT_DIR_IN_HOST}"
           echo "UNITTEST_RESULT_DIR=$UNITTEST_RESULT_DIR_IN_HOST" >> $GITHUB_ENV
@@ -78,14 +78,8 @@ jobs:
         # if: always()
         uses: actions/upload-artifact@v2
         with:
-          name: Unit Test Results (${{ matrix.test_target_mod }})
-          path: ${{ env.UNITTEST_RESULT_DIR }}
-
-      # - name: Publish unit test result.
-      #   uses: EnricoMi/publish-unit-test-result-action@v1
-      #   with:
-      #     files: ${{ env.UNITTEST_RESULT_DIR }}/**/*.xml
-  
+          name: unittest-results-${{ matrix.test_target_mod }}
+          path: ${{ env.UNITTEST_RESULT_DIR }}  
 
   publish-test-results:
     name: "Publish Unit Tests Results"
