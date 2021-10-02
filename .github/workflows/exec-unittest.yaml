@@ -50,7 +50,7 @@ jobs:
           mkdir -p "${UNITTEST_RESULT_DIR_IN_HOST}"
           docker container run \
             -i \
-            -v "${UNITTEST_RESULT_DIR_IN_HOST}":"${UNITTEST_RESULT_DIR}" \
+            -v "${UNITTEST_RESULT_DIR_IN_HOST}":"${UNITTEST_RESULT_DIR_IN_CONTAINER}" \
             ${{ env.UNITTEST_IMAGE }} \
             unittest "${UNITTEST_RESULT_DIR}"
       # TODO:
