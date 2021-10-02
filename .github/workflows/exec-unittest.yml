@@ -78,7 +78,6 @@ jobs:
 
       - name: Upload Unit Test Results
         if: ${{ env.HAS_DIFF == '1' }}
-        # if: always()
         uses: actions/upload-artifact@v2
         with:
           name: unittest-results-${{ matrix.test_target_mod }}
@@ -93,19 +92,26 @@ jobs:
         with:
           path: artifacts
 
-      - name: List downloaded artifacts
+      - name: Check if unittest result has content.
+        # もし、各モジュールのコード変更がない場合は、
+        # 各unittestは実行されておらず、download-artifactの結果の
+        # directoryは存在しなくなる。
         run: |
-          pwd
-          ls -aR artifacts/
+          artifact_dir_content=$(ls artifacts || true)
+          if [ ! -z $artifact_dir_content]; then
+            DID_UNITTEST='1'
+          else
+            DID_UNITTEST='0'
+          fi
+          echo DID_UNITTEST=${DID_UNITTEST}
+          echo "DID_UNITTEST=$DID_UNITTEST" >> $GITHUB_ENV
 
       - name: Publish Unit Test Results
+        if: ${{ env.DID_UNITTEST == '1' }}
         uses: EnricoMi/publish-unit-test-result-action@v1
         with:
           files: artifacts/**/*.xml
 
-
-      # TODO:
-      # unittestが失敗したときに、workflowも失敗したことにしたい。
 
       # TODO:
       # Daianaのように、複数の独立したモジュールを１つのリポジトリで管理している場合、
