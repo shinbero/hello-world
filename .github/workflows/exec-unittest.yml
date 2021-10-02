@@ -83,7 +83,7 @@ jobs:
 
   publish-test-results:
     name: "Publish Unit Tests Results"
-    needs: execute-unittest-after-local-merge
+    needs: execute-unittest-and-upload
     runs-on: ubuntu-latest
     # if: always()
 
