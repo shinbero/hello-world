@@ -55,7 +55,6 @@ jobs:
       - name: Create docker image for merged code.
         if: ${{ env.HAS_DIFF == '1' }}
         run: |
-          # TODO: 変更があったモジュールをリストし、そこに対してループ処理でunittestする.
           cd ${{ matrix.test_target_mod }}
           UNITTEST_IMAGE=tmp_unittest_image:1.0
           echo "UNITTEST_IMAGE=$UNITTEST_IMAGE" >> $GITHUB_ENV
