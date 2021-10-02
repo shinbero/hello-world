@@ -4,6 +4,11 @@ on: [pull_request]
 jobs:
   execute-unittest-after-local-merge:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        test_target_mods:
+          - mod_1
+          - mod_2
     env:
       DOCKER_REGISTRY: daianatest.azurecr.io
     steps:
@@ -27,16 +32,13 @@ jobs:
           git merge remotes/origin/${{ github.head_ref }} --no-edit
       - name: Load Dockerfile base image name.
         run: |
-          cd mod_1
-          # export env_IMAGE_REGISTRY=${{ env.DOCKER_REGISTRY }}
-          # ('BASE_IMAGE' variable will be set.)
+          cd ${{ matrix.test_target_mod }}
           BASE_IMAGE=$( ./get_base_image.sh "${{ env.DOCKER_REGISTRY }}" )
-          # env_IMAGE_REGISTRY=${{ env.DOCKER_REGISTRY }} . base_image_config.sh
           echo "BASE_IMAGE=$BASE_IMAGE" >> $GITHUB_ENV
       - name: Create docker image for merged code.
         run: |
           # TODO: 変更があったモジュールをリストし、そこに対してループ処理でunittestする.
-          cd mod_1
+          cd ${{ matrix.test_target_mod }}
           UNITTEST_IMAGE=tmp_unittest_image:1.0
           echo "UNITTEST_IMAGE=$UNITTEST_IMAGE" >> $GITHUB_ENV
 
