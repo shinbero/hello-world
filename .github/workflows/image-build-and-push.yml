@@ -46,11 +46,20 @@ jobs:
         if: ${{ env.HAS_DIFF == '1' }}
         run: |
           echo "IMAGE_NAME=${{ env.DOCKER_REGISTRY }}/${{ github.repository }}/${{ matrix.test_target_mod }}:$(date +"%Y-%m-%d_%H-%M-%S-%Z")-${{ env.COMMIT_ID }}" >> $GITHUB_ENV
+      - name: Load Dockerfile base image name.
+        if: ${{ env.HAS_DIFF == '1' }}
+        run: |
+          cd ${{ matrix.test_target_mod }}
+          BASE_IMAGE=$( ./get_base_image.sh "${{ env.DOCKER_REGISTRY }}" )
+          echo "BASE_IMAGE=$BASE_IMAGE" >> $GITHUB_ENV
       - name: Build docker image for merged code.
         if: ${{ env.HAS_DIFF == '1' }}
         run: |
           cd ${{ matrix.test_target_mod }}
-          docker image build -t ${{ env.IMAGE_NAME }} .
+          docker image build \
+            -t ${{ env.IMAGE_NAME }} \
+            --build-arg base_image=${{ env.BASE_IMAGE }} .
+            .
       - name: Login to ACR.
         if: ${{ env.HAS_DIFF == '1' }}
         run: |
