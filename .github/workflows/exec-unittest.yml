@@ -31,7 +31,7 @@ jobs:
             remotes/origin/${{ github.head_ref }} \
             | grep ${{ matrix.test_target_mod }} \
             || true)
-          if [ ! -z $grep_result]; then
+          if [ ! -z "$grep_result" ]; then
             HAS_DIFF='1'
           else
             HAS_DIFF='0'
@@ -98,7 +98,7 @@ jobs:
         # directoryは存在しなくなる。
         run: |
           artifact_dir_content=$(ls artifacts || true)
-          if [ ! -z $artifact_dir_content]; then
+          if [ ! -z "$artifact_dir_content" ]; then
             DID_UNITTEST='1'
           else
             DID_UNITTEST='0'
