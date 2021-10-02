@@ -1,11 +1,17 @@
 name: Image build and push.
 on:
+  # mainブランチにPRがmergeされる際にトリガーされる。
   push:
     branches:
       - main
 jobs:
-  Image-build:
+  Image-build-and-push:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        test_target_mod:
+          - mod_1
+          - mod_2
     env:
       DOCKER_REGISTRY: daianatest.azurecr.io
     steps:

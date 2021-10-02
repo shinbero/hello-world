@@ -2,7 +2,7 @@ name: Execute unittest
 # on: [push]
 on: [pull_request]
 jobs:
-  execute-unittest-after-local-merge:
+  execute-unittest-and-upload:
     runs-on: ubuntu-latest
     strategy:
       matrix:
