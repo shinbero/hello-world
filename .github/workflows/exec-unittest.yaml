@@ -2,7 +2,7 @@ name: Execute unittest
 # on: [push]
 on: [pull_request]
 jobs:
-  execute-unittest-after-merge-locally:
+  execute-unittest-after-local-merge:
     runs-on: ubuntu-latest
     env:
       DOCKER_REGISTRY: daianatest.azurecr.io
