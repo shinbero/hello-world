@@ -26,9 +26,12 @@ jobs:
           git branch -a
       - name: Check the mod has diff.
         run: |
-          git diff remotes/origin/${{ github.base_ref }} remotes/origin/${{ github.head_ref }} --name-only \
-            | grep ${{ matrix.test_target_mod }}
-          if [ $? -eq 0 ]; then
+          grep_result=$(git diff --name-only \
+            remotes/origin/${{ github.base_ref }} \
+            remotes/origin/${{ github.head_ref }} \
+            | grep ${{ matrix.test_target_mod }} \
+            || true)
+          if [ ! -z $grep_result]; then
             HAS_DIFF='1'
           else
             HAS_DIFF='0'
