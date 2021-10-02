@@ -1,4 +1,5 @@
-set -u
+#!/bin/bash
+set -eu
 
 if [[ $# -ne 1  ]]; then
     echo "Usage: sh get_base_image.sh <Registry server" \

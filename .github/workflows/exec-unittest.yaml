@@ -30,7 +30,7 @@ jobs:
           cd mod_1
           # export env_IMAGE_REGISTRY=${{ env.DOCKER_REGISTRY }}
           # ('BASE_IMAGE' variable will be set.)
-          BASE_IMAGE=$( sh get_base_image.sh "${{ env.DOCKER_REGISTRY }}" )
+          BASE_IMAGE=$( ./get_base_image.sh "${{ env.DOCKER_REGISTRY }}" )
           # env_IMAGE_REGISTRY=${{ env.DOCKER_REGISTRY }} . base_image_config.sh
           echo "BASE_IMAGE=$BASE_IMAGE" >> $GITHUB_ENV
       - name: Create docker image for merged code.
