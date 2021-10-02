@@ -70,7 +70,11 @@ function image_build(){
             > ${generated_dockerfile}
 
         log "Start building image."
-        docker image build -t ${result_image} -f ${generated_dockerfile} .
+        # docker image build -t ${result_image} -f ${generated_dockerfile} .
+        docker buildx build \
+            -t ${result_image} \
+            --platform linux/amd64 \
+            -f ${generated_dockerfile} .
     else
         log "[WARNING] Docker image, '${result_image}' already exists!" \
             " Skip image build."
