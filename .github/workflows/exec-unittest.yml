@@ -24,7 +24,7 @@ jobs:
           diff_result=$(git diff --name-only \
             remotes/origin/${{ github.base_ref }} \
             remotes/origin/${{ github.head_ref }} \
-            | grep -E './${{ matrix.test_target_mod }}/.*' \
+            | grep -E '$${{ matrix.test_target_mod }}/.*' \
             || true)
           if [ ! -z "$diff_result" ]; then
             HAS_DIFF='1'
@@ -47,6 +47,7 @@ jobs:
           BASE_IMAGE=$( ./get_base_image.sh "${{ env.DOCKER_REGISTRY }}" )
           echo "BASE_IMAGE=$BASE_IMAGE" >> $GITHUB_ENV
       - name: Login to ACR.
+        if: ${{ env.HAS_DIFF == '1' }}
         run: |
           docker login ${{ env.DOCKER_REGISTRY }} \
             -u ${{ secrets.acr_daianatest_username }} \
