@@ -85,6 +85,7 @@ jobs:
 
   publish-test-results:
     needs: execute-unittest-and-upload
+    if: always()
     runs-on: ubuntu-latest
     steps:
       - name: Download Artifacts
