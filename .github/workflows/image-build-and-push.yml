@@ -6,6 +6,13 @@ on:
   # push:
   #   branches:
   #     - main
+
+env:
+  # Docker run する際のコンテナにリポジトリをマウントする先のパス
+  # PATH_MOUNT: /workspaces/myapp
+  PATH_CACHE: /tmp/has_diff
+  HAS_DIFF_2: '0'
+
 jobs:
   image-and-manifest-build-and-push:
     runs-on: ubuntu-latest
@@ -47,6 +54,7 @@ jobs:
           fi
           echo HAS_DIFF=${HAS_DIFF}
           echo "HAS_DIFF=$HAS_DIFF" >> $GITHUB_ENV
+          echo "HAS_DIFF_2=$HAS_DIFF" >> $GITHUB_ENV
           echo "::set-output name=has_diff::$HAS_DIFF"
       - name: Set env - git HEAD commit ID.
         if: ${{ env.HAS_DIFF == '1' }}
@@ -121,11 +129,22 @@ jobs:
           git config --global user.email "tmp@example.com"
           git commit -m "Created new manifest in ${branch_name}"
           git push -u origin ${branch_name}
-      # - uses: actions/cache@v2
-      #   id: cache
-      #   with:
-      #     path: path/to/dependencies
-      #     key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
+      - uses: actions/cache@v2
+        id: cache
+        with:
+          path: ${{ env.PATH_CACHE }}
+          key: ${{ github.action }}-has_diff
+          # key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
+      # - name: Write file to cache if has diff.
+      - name: Hogehoge
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ${{ env.PATH_CACHE }}
+
+      - name: List cache dir
+        run: |
+          ls -alR ${{ env.PATH_CACHE }}
+
   
   create-pr-of-cluster:
     needs: image-and-manifest-build-and-push
@@ -136,9 +155,19 @@ jobs:
       #   uses: actions/download-artifact@v2
       #   with:
       #     path: artifacts
+      - uses: actions/cache@v2
+        id: cache
+        with:
+          path: ${{ env.PATH_CACHE }}
+          key: ${{ github.action }}-has_diff
+
+      - name: List cache dir
+        run: |
+          ls -alR ${{ env.PATH_CACHE }}
 
       - name: Create PR to cluster repo. <- This should not be done in matrix.
         # if: ${{ env.HAS_DIFF == '1' }}
         run: |
+          echo ${{ env.HAS_DIFF_2 }}
           echo ${{needs.image-and-manifest-build-and-push.outputs.has_diff}}
 
