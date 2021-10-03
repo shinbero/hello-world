@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        test_target_mod:
+        modules:
           - mod_1
           - mod_2
     env:
@@ -30,7 +30,7 @@ jobs:
         run: |
           diff_result=$(git diff --name-only \
             HEAD~ \
-            | grep -E '^${{ matrix.test_target_mod }}/.*' \
+            | grep -E '^${{ matrix.modules }}/.*' \
             || true)
           if [ ! -z "$diff_result" ]; then
             HAS_DIFF='1'
@@ -47,13 +47,13 @@ jobs:
         if: ${{ env.HAS_DIFF == '1' }}
         run: |
           IMAGE_NAME="${{ env.DOCKER_REGISTRY }}/${{ github.repository }}"
-          IMAGE_NAME+="/${{ matrix.test_target_mod }}"
+          IMAGE_NAME+="/${{ matrix.modules }}"
           IMAGE_NAME+=":$(date +"%Y-%m-%d_%H-%M-%S-%Z")-${{ env.COMMIT_ID }}"
           echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
       - name: Load Dockerfile base image name.
         if: ${{ env.HAS_DIFF == '1' }}
         run: |
-          cd ${{ matrix.test_target_mod }}
+          cd ${{ matrix.modules }}
           BASE_IMAGE=$( ./get_base_image.sh "${{ env.DOCKER_REGISTRY }}" )
           echo "BASE_IMAGE=$BASE_IMAGE" >> $GITHUB_ENV
       - name: Login to ACR.
@@ -65,7 +65,7 @@ jobs:
       - name: Build docker image for merged code.
         if: ${{ env.HAS_DIFF == '1' }}
         run: |
-          cd ${{ matrix.test_target_mod }}
+          cd ${{ matrix.modules }}
           docker image build \
             -t ${{ env.IMAGE_NAME }} \
             --build-arg base_image=${{ env.BASE_IMAGE }} .
@@ -78,8 +78,30 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: 'shinbero/hello-world-cluster'
-      - name: Check out cluster repo.
+      - name: Create manifest of the mod.
+        if: ${{ env.HAS_DIFF == '1' }}
+        run: |
+          template_manifest=manifests/template/${{ matrix.modules }}.template.yml
+          generated_manifest=manifests/${{ matrix.modules }}.yml
+          cat ${template_manifest} \
+            | set -e "s#%%__IMAGE__%%#${{ env.IMAGE_NAME }}#g" \
+            > ${generated_manifest}
+      - name: Checkout to feature branch & commit & push to cluster repo.
+        if: ${{ env.HAS_DIFF == '1' }}
+        run: |
+          branch_name=${{ github.repository }}/actions/runs/${{ github.run_id }}
+          git add .
+          git config --global user.name "tmp"
+          git config --global user.email "tmp@example.com"
+          git commit -m "Created new manifest in ${branch_name}"
+          git remote -v
+          git push -u origin ${branch_name}
+      - name: Create PR to cluster repo.
         if: ${{ env.HAS_DIFF == '1' }}
         run: |
           pwd
-          ls -alR
+      # - name: list files.
+      #   if: ${{ env.HAS_DIFF == '1' }}
+      #   run: |
+      #     pwd
+      #     ls -alR
