@@ -75,7 +75,7 @@ jobs:
         run: docker load --input ${{ env.BASE_IMAGE_TAR }}
 
       # Cacheが無い場合はbase imageをpullし、tarをcache dirに保存.
-      - name: Build Docker image and save
+      - name: Pull Docker image and save
         if: ${{ env.HAS_DIFF == '1' && steps.base-image-cache.outputs.cache-hit != 'true'}}
         run: |
           docker image pull ${{ env.BASE_IMAGE }}
