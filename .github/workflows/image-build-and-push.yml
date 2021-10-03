@@ -70,6 +70,13 @@ jobs:
           echo "BASE_IMAGE=$BASE_IMAGE" >> $GITHUB_ENV
           echo "BASE_IMAGE_TAR=$BASE_IMAGE_TAR" >> $GITHUB_ENV
 
+      - name: Login to ACR.
+        if: ${{ env.HAS_DIFF == '1' }}
+        run: |
+          docker login ${{ env.DOCKER_REGISTRY }} \
+            -u ${{ secrets.acr_daianatest_username }} \
+            -p ${{ secrets.acr_daianatest_password }}
+
       - uses: actions/cache@v2
         id: base-image-cache
         if: ${{ env.HAS_DIFF == '1' }}
@@ -90,12 +97,6 @@ jobs:
           mkdir -p ${{ env.BASE_IMAGE_CACHE_PATH }}
           docker save --output ${{ env.BASE_IMAGE_TAR }} ${{ env.BASE_IMAGE }}
 
-      - name: Login to ACR.
-        if: ${{ env.HAS_DIFF == '1' }}
-        run: |
-          docker login ${{ env.DOCKER_REGISTRY }} \
-            -u ${{ secrets.acr_daianatest_username }} \
-            -p ${{ secrets.acr_daianatest_password }}
       - name: Build docker image for merged code.
         if: ${{ env.HAS_DIFF == '1' }}
         run: |
