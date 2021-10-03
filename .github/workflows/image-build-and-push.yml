@@ -84,7 +84,7 @@ jobs:
           template_manifest=manifests/template/${{ matrix.modules }}.template.yml
           generated_manifest=manifests/${{ matrix.modules }}.yml
           cat ${template_manifest} \
-            | set -e "s#%%__IMAGE__%%#${{ env.IMAGE_NAME }}#g" \
+            | sed -e "s#%%__IMAGE__%%#${{ env.IMAGE_NAME }}#g" \
             > ${generated_manifest}
       - name: Checkout to feature branch & commit & push to cluster repo.
         if: ${{ env.HAS_DIFF == '1' }}
@@ -96,7 +96,9 @@ jobs:
           git config --global user.name "tmp"
           git config --global user.email "tmp@example.com"
           git commit -m "Created new manifest in ${branch_name}"
-          git push -u origin ${branch_name}
+          git push -u \
+            https://${{ secrets.CLUSTER_REPO_USER }}:${{ secrets.CLUSTER_REPO_TOKEN }}@github.com/shinbero/hello-world-cluster.git \
+            ${branch_name}
       - name: Create PR to cluster repo. <- This should not be done in matrix.
         if: ${{ env.HAS_DIFF == '1' }}
         run: |
