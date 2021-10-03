@@ -1,10 +1,11 @@
 name: Image build and push.
 on:
-  # mainブランチにPRがmergeされる際にトリガーされる。
-  # つまり、mergeが完了したタイミングでJobが走る。
-  push:
-    branches:
-      - main
+  [pull_request]
+  # # mainブランチにPRがmergeされる際にトリガーされる。
+  # # つまり、mergeが完了したタイミングでJobが走る。
+  # push:
+  #   branches:
+  #     - main
 jobs:
   Image-build-and-push:
     runs-on: ubuntu-latest
