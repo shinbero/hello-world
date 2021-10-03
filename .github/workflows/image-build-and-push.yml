@@ -126,14 +126,17 @@ jobs:
           git push -u origin ${branch_name}
       - uses: actions/cache@v2
         id: cache
+        # if: ${{ env.HAS_DIFF == '1' }}
         with:
           path: ${{ env.PATH_CACHE }}
-          key: ${{ github.action }}-has_diff
+          key: ${{ github.repository }}/actions/runs/${{ github.run_id }}-has_diff
           # key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
       # - name: Write file to cache if has diff.
       - name: Create cache dir if not exists yet.
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
+          ls_result=$(ls -alR ${{ env.PATH_CACHE }} || true)
+          echo "${ls_result}"
           mkdir -p ${{ env.PATH_CACHE }}
 
       - name: Create flag file if had diff on mod.
