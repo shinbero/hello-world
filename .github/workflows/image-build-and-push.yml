@@ -1,18 +1,29 @@
 name: Image build and push.
 on:
+  # [pull_request]
   # mainブランチにPRがmergeされる際にトリガーされる。
   # つまり、mergeが完了したタイミングでJobが走る。
   push:
     branches:
       - main
+
+env:
+  PATH_CACHE: /tmp/has_diff
+
+  # Branch名は、どのActionで走ったか特定できるような名前にする.
+  BRANCH_NAME: ${{ github.repository }}/actions/runs/${{ github.run_id }}
 jobs:
-  Image-build-and-push:
+  image-and-manifest-build-and-push:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        test_target_mod:
+        modules:
           - mod_1
           - mod_2
+
+      # １つのブランチに対して複数のcommitをSequentialに追加したいので、
+      # 並列runを禁止する.
+      max-parallel: 1
     env:
       DOCKER_REGISTRY: daianatest.azurecr.io
     steps:
@@ -26,10 +37,11 @@ jobs:
           # Mergeの１つ前の状態も確認するため、depth=2とする.
           fetch-depth: 2
       - name: Check the mod has diff.
+        id: check-mod-diff
         run: |
           diff_result=$(git diff --name-only \
             HEAD~ \
-            | grep -E '^${{ matrix.test_target_mod }}/.*' \
+            | grep -E '^${{ matrix.modules }}/.*' \
             || true)
           if [ ! -z "$diff_result" ]; then
             HAS_DIFF='1'
@@ -46,13 +58,13 @@ jobs:
         if: ${{ env.HAS_DIFF == '1' }}
         run: |
           IMAGE_NAME="${{ env.DOCKER_REGISTRY }}/${{ github.repository }}"
-          IMAGE_NAME+="/${{ matrix.test_target_mod }}"
+          IMAGE_NAME+="/${{ matrix.modules }}"
           IMAGE_NAME+=":$(date +"%Y-%m-%d_%H-%M-%S-%Z")-${{ env.COMMIT_ID }}"
           echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
       - name: Load Dockerfile base image name.
         if: ${{ env.HAS_DIFF == '1' }}
         run: |
-          cd ${{ matrix.test_target_mod }}
+          cd ${{ matrix.modules }}
           BASE_IMAGE=$( ./get_base_image.sh "${{ env.DOCKER_REGISTRY }}" )
           echo "BASE_IMAGE=$BASE_IMAGE" >> $GITHUB_ENV
       - name: Login to ACR.
@@ -64,7 +76,7 @@ jobs:
       - name: Build docker image for merged code.
         if: ${{ env.HAS_DIFF == '1' }}
         run: |
-          cd ${{ matrix.test_target_mod }}
+          cd ${{ matrix.modules }}
           docker image build \
             -t ${{ env.IMAGE_NAME }} \
             --build-arg base_image=${{ env.BASE_IMAGE }} .
@@ -72,3 +84,83 @@ jobs:
         if: ${{ env.HAS_DIFF == '1' }}
         run: |
           docker image push ${{ env.IMAGE_NAME }}
+      - name: Check out cluster repo.
+        if: ${{ env.HAS_DIFF == '1' }}
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0 # 既存のfeature branchを参照したい場合がある為.
+          repository: 'shinbero/hello-world-cluster'
+
+          # 別repositryでPushもしたい場合は、
+          # このWorkflowのデフォルトのトークン(GITHUB_TOKEN)では403 errorとなる為,
+          # 対象repoにwrite権限があるTOKENを利用する.
+          token: ${{ secrets.CLUSTER_REPO_TOKEN }}
+      - name: Create manifest of the mod.
+        if: ${{ env.HAS_DIFF == '1' }}
+        run: |
+          template_manifest=manifests/template/${{ matrix.modules }}.template.yml
+          generated_manifest=manifests/${{ matrix.modules }}.yml
+          cat ${template_manifest} \
+            | sed -e "s#%%__IMAGE__%%#${{ env.IMAGE_NAME }}#g" \
+            > ${generated_manifest}
+      - name: Checkout to feature branch & commit & push to cluster repo.
+        if: ${{ env.HAS_DIFF == '1' }}
+        run: |
+          feature_branch_exists=$(git branch -a | grep ${{ env.BRANCH_NAME }} || true)
+          if [ ! -z ${feature_branch_exists} ]; then
+            # The branch already exists.
+            git checkout ${{ env.BRANCH_NAME }}
+          else
+            # まだ対象のbranchが存在しないので、作成してcheckout.
+            git checkout -b ${{ env.BRANCH_NAME }}
+          fi
+          git diff
+          git add .
+          git config --global user.name "tmp"
+          git config --global user.email "tmp@example.com"
+          git commit -m "Created new manifest in ${{ env.BRANCH_NAME }}"
+          git push -u origin ${{ env.BRANCH_NAME }}
+      - uses: actions/cache@v2
+        id: cache
+        if: ${{ env.HAS_DIFF == '1' }}
+        with:
+          path: ${{ env.PATH_CACHE }}
+          key: ${{ github.repository }}/actions/runs/${{ github.run_id }}-has_diff
+      - name: Create cache dir if not exists yet.
+        if: ${{ env.HAS_DIFF == '1' && steps.cache.outputs.cache-hit != 'true' }} 
+        run: |
+          ls_result=$(ls -alR ${{ env.PATH_CACHE }} || true)
+          echo "${ls_result}"
+          mkdir -p ${{ env.PATH_CACHE }}
+  
+  create-pr-of-cluster:
+    needs: image-and-manifest-build-and-push
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/cache@v2
+        id: cache
+        with:
+          path: ${{ env.PATH_CACHE }}
+          key: ${{ github.repository }}/actions/runs/${{ github.run_id }}-has_diff
+
+      - name: Check if there were any diff by cheking cache exists.
+        # image-and-manifest-build-and-push jobにて、
+        # cacheはdiffがあった時にのみ作成するようにしている.
+        # その為、cacheが作られている=diffがあったmodが存在するということになる。
+        if: steps.cache.outputs.cache-hit == 'true'
+        run: |
+          echo "HAS_DIFF=1" >> $GITHUB_ENV
+
+      - name: Create PR to cluster repo.
+        if: ${{ env.HAS_DIFF == '1' }}
+        run: |
+          curl -X POST \
+          -H "Accept: application/vnd.github.v3+json" \
+          https://${{ secrets.CLUSTER_REPO_USER }}:${{ secrets.CLUSTER_REPO_TOKEN }}@api.github.com/repos/shinbero/hello-world-cluster/pulls \
+          -d '{
+            "title": "Merge ${{ env.BRANCH_NAME }}",
+            "head": "${{ env.BRANCH_NAME }}",
+            "base": "main"
+          }'
+
