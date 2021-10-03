@@ -158,5 +158,9 @@ jobs:
           curl -X POST \
           -H "Accept: application/vnd.github.v3+json" \
           https://${{ secrets.CLUSTER_REPO_USER }}:${{ secrets.CLUSTER_REPO_TOKEN }}@api.github.com/repos/shinbero/hello-world-cluster/pulls \
-          -d '{"head":"${{ env.BRANCH_NAME }}","base":"main"}'
+          -d '{\
+            "title": "Merge ${{ env.BRANCH_NAME }}",\
+            "head": "${{ env.BRANCH_NAME }}",\
+            "base": "main"\
+          }'
 
