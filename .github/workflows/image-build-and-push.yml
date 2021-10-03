@@ -138,8 +138,9 @@ jobs:
 
       - name: Create flag file if had diff on mod.
         run: |
-          # ls -alR ${{ env.PATH_CACHE }}
-          touch ${{ env.PATH_CACHE }}/hoge.txt
+          ls -alR ${{ env.PATH_CACHE }}
+          echo "Hello" > ${{ env.PATH_CACHE }}/${{ matrix.modules }}.txt
+          ls -alR ${{ env.PATH_CACHE }}
 
   
   create-pr-of-cluster:
