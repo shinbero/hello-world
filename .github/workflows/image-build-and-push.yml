@@ -72,3 +72,13 @@ jobs:
         if: ${{ env.HAS_DIFF == '1' }}
         run: |
           docker image push ${{ env.IMAGE_NAME }}
+      - name: Check out cluster repo.
+        if: ${{ env.HAS_DIFF == '1' }}
+        uses: actions/checkout@v2
+        with:
+          repository: 'shinbero/hello-world-cluster'
+      - name: Check out cluster repo.
+        if: ${{ env.HAS_DIFF == '1' }}
+        run: |
+          pwd
+          ls -alR
