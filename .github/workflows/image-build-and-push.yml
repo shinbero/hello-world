@@ -66,7 +66,11 @@ jobs:
         run: |
           cd ${{ matrix.modules }}
           BASE_IMAGE=$( ./get_base_image.sh "${{ env.DOCKER_REGISTRY }}" )
-          BASE_IMAGE_TAR=${{ env.BASE_IMAGE_CACHE_PATH }}/${BASE_IMAGE}.tar
+
+          # cacheのkeyがIDとして働くので、tarファイル名自体は任意のもので良い。
+          # なお、image名をファイル名とすると、'/'を含む場合にファイル作成に失敗する為、
+          # それは避ける。
+          BASE_IMAGE_TAR=${{ env.BASE_IMAGE_CACHE_PATH }}/base_image.tar
           echo "BASE_IMAGE=$BASE_IMAGE" >> $GITHUB_ENV
           echo "BASE_IMAGE_TAR=$BASE_IMAGE_TAR" >> $GITHUB_ENV
 
