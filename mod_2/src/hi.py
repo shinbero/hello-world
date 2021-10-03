@@ -1,5 +1,5 @@
 def main():
-    print(f"mod_2: add_2(77)={add_2(77)}")
+    print(f"mod_2: add_2(50)={add_2(50)}")
 
 
 def add_2(num):

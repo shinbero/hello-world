@@ -1,14 +1,15 @@
 name: Image build and push.
 on:
   # [pull_request]
-  # mainブランチにPRがmergeされる際にトリガーされる。
-  # つまり、mergeが完了したタイミングでJobが走る。
+  mainブランチにPRがmergeされる際にトリガーされる。
+  つまり、mergeが完了したタイミングでJobが走る。
   push:
     branches:
       - main
 
 env:
-  PATH_CACHE: /tmp/has_diff
+  BASE_IMAGE_CACHE_PATH: /tmp/base_image_tar
+  HAS_DIFF_CACHE_PATH: /tmp/has_diff
 
   # Branch名は、どのActionで走ったか特定できるような名前にする.
   BRANCH_NAME: ${{ github.repository }}/actions/runs/${{ github.run_id }}
@@ -66,13 +67,41 @@ jobs:
         run: |
           cd ${{ matrix.modules }}
           BASE_IMAGE=$( ./get_base_image.sh "${{ env.DOCKER_REGISTRY }}" )
+
+          # cacheのkeyがIDとして働くので、tarファイル名自体は任意のもので良い。
+          # なお、image名をファイル名とすると、'/'を含む場合にファイル作成に失敗する為、
+          # それは避ける。
+          BASE_IMAGE_TAR=${{ env.BASE_IMAGE_CACHE_PATH }}/base_image.tar
           echo "BASE_IMAGE=$BASE_IMAGE" >> $GITHUB_ENV
+          echo "BASE_IMAGE_TAR=$BASE_IMAGE_TAR" >> $GITHUB_ENV
+
       - name: Login to ACR.
         if: ${{ env.HAS_DIFF == '1' }}
         run: |
           docker login ${{ env.DOCKER_REGISTRY }} \
             -u ${{ secrets.acr_daianatest_username }} \
             -p ${{ secrets.acr_daianatest_password }}
+
+      - uses: actions/cache@v2
+        id: base-image-cache
+        if: ${{ env.HAS_DIFF == '1' }}
+        with:
+          path: ${{ env.BASE_IMAGE_CACHE_PATH }}
+          key: ${{ env.BASE_IMAGE }}-111
+
+      # Cacheがある場合はbase imageのtarをload.
+      - name: Load Docker image if exists
+        if: ${{ env.HAS_DIFF == '1' && steps.base-image-cache.outputs.cache-hit == 'true'}}
+        run: docker load --input ${{ env.BASE_IMAGE_TAR }}
+
+      # Cacheが無い場合はbase imageをpullし、tarをcache dirに保存.
+      - name: Pull Docker image and save
+        if: ${{ env.HAS_DIFF == '1' && steps.base-image-cache.outputs.cache-hit != 'true'}}
+        run: |
+          docker image pull ${{ env.BASE_IMAGE }}
+          mkdir -p ${{ env.BASE_IMAGE_CACHE_PATH }}
+          docker save --output ${{ env.BASE_IMAGE_TAR }} ${{ env.BASE_IMAGE }}
+
       - name: Build docker image for merged code.
         if: ${{ env.HAS_DIFF == '1' }}
         run: |
@@ -124,14 +153,14 @@ jobs:
         id: cache
         if: ${{ env.HAS_DIFF == '1' }}
         with:
-          path: ${{ env.PATH_CACHE }}
+          path: ${{ env.HAS_DIFF_CACHE_PATH }}
           key: ${{ github.repository }}/actions/runs/${{ github.run_id }}-has_diff
       - name: Create cache dir if not exists yet.
         if: ${{ env.HAS_DIFF == '1' && steps.cache.outputs.cache-hit != 'true' }} 
         run: |
-          ls_result=$(ls -alR ${{ env.PATH_CACHE }} || true)
+          ls_result=$(ls -alR ${{ env.HAS_DIFF_CACHE_PATH }} || true)
           echo "${ls_result}"
-          mkdir -p ${{ env.PATH_CACHE }}
+          mkdir -p ${{ env.HAS_DIFF_CACHE_PATH }}
   
   create-pr-of-cluster:
     needs: image-and-manifest-build-and-push
@@ -141,7 +170,7 @@ jobs:
       - uses: actions/cache@v2
         id: cache
         with:
-          path: ${{ env.PATH_CACHE }}
+          path: ${{ env.HAS_DIFF_CACHE_PATH }}
           key: ${{ github.repository }}/actions/runs/${{ github.run_id }}-has_diff
 
       - name: Check if there were any diff by cheking cache exists.
