@@ -1,11 +1,11 @@
 name: Image build and push.
 on:
-  [pull_request]
-  # # mainブランチにPRがmergeされる際にトリガーされる。
-  # # つまり、mergeが完了したタイミングでJobが走る。
-  # push:
-  #   branches:
-  #     - main
+  # [pull_request]
+  # mainブランチにPRがmergeされる際にトリガーされる。
+  # つまり、mergeが完了したタイミングでJobが走る。
+  push:
+    branches:
+      - main
 
 env:
   PATH_CACHE: /tmp/has_diff
