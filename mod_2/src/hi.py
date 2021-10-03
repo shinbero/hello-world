@@ -1,5 +1,5 @@
 def main():
-    add_2(3)
+    print(f"mod_2: add_2(99)={add_2(99)}")
 
 
 def add_2(num):

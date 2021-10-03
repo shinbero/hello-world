@@ -45,7 +45,10 @@ jobs:
       - name: Set env - docker image name.
         if: ${{ env.HAS_DIFF == '1' }}
         run: |
-          echo "IMAGE_NAME=${{ env.DOCKER_REGISTRY }}/${{ github.repository }}/${{ matrix.test_target_mod }}:$(date +"%Y-%m-%d_%H-%M-%S-%Z")-${{ env.COMMIT_ID }}" >> $GITHUB_ENV
+          IMAGE_NAME="${{ env.DOCKER_REGISTRY }}/${{ github.repository }}"
+          IMAGE_NAME+="/${{ matrix.test_target_mod }}"
+          IMAGE_NAME+=":$(date +"%Y-%m-%d_%H-%M-%S-%Z")-${{ env.COMMIT_ID }}"
+          echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
       - name: Load Dockerfile base image name.
         if: ${{ env.HAS_DIFF == '1' }}
         run: |
@@ -55,7 +58,9 @@ jobs:
       - name: Login to ACR.
         if: ${{ env.HAS_DIFF == '1' }}
         run: |
-          docker login ${{ env.DOCKER_REGISTRY }} -u ${{ secrets.acr_daianatest_username }} -p ${{ secrets.acr_daianatest_password }}
+          docker login ${{ env.DOCKER_REGISTRY }} \
+            -u ${{ secrets.acr_daianatest_username }} \
+            -p ${{ secrets.acr_daianatest_password }}
       - name: Build docker image for merged code.
         if: ${{ env.HAS_DIFF == '1' }}
         run: |
