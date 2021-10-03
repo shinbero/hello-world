@@ -90,13 +90,14 @@ jobs:
         if: ${{ env.HAS_DIFF == '1' }}
         run: |
           branch_name=${{ github.repository }}/actions/runs/${{ github.run_id }}
+          git checkout -b ${branch_name}
+          git diff
           git add .
           git config --global user.name "tmp"
           git config --global user.email "tmp@example.com"
           git commit -m "Created new manifest in ${branch_name}"
-          git remote -v
           git push -u origin ${branch_name}
-      - name: Create PR to cluster repo.
+      - name: Create PR to cluster repo. <- This should not be done in matrix.
         if: ${{ env.HAS_DIFF == '1' }}
         run: |
           pwd
