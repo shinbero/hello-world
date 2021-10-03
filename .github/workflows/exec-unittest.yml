@@ -60,12 +60,12 @@ jobs:
 
       # Cacheがある場合はbase imageのtarをload.
       - name: Load Docker image if exists
-        if: steps.base-image-cache.outputs.cache-hit == 'true'
+        if: ${{ env.HAS_DIFF == '1' && steps.base-image-cache.outputs.cache-hit == 'true'}}
         run: docker load --input ${{ env.BASE_IMAGE_TAR }}
 
       # Cacheが無い場合はbase imageをpullし、tarをcache dirに保存.
       - name: Build Docker image and save
-        if: steps.base-image-cache.outputs.cache-hit != 'true'
+        if: ${{ env.HAS_DIFF == '1' && steps.base-image-cache.outputs.cache-hit != 'true'}}
         run: |
           docker image pull ${{ env.BASE_IMAGE }}
           mkdir -p ${{ env.BASE_IMAGE_CACHE_PATH }}
