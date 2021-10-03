@@ -103,7 +103,7 @@ jobs:
           # Branch名は、どのActionで走ったか特定できるような名前にする.
           branch_name=${{ github.repository }}/actions/runs/${{ github.run_id }}
 
-          feature_branch_exists=(git branch -a | grep ${branch_name} || true)
+          feature_branch_exists=$(git branch -a | grep ${branch_name} || true)
           if [ ! -z ${feature_branch_exists} ]; then
             # The branch already exists.
             git checkout ${branch_name}
