@@ -7,8 +7,10 @@ on:
   #   branches:
   #     - main
 jobs:
-  Image-build-and-push:
+  Image-and-manifest-build-and-push:
     runs-on: ubuntu-latest
+    outputs:
+      has_diff: ${{ steps.check-mod-diff.outputs.has_diff }}
     strategy:
       matrix:
         modules:
@@ -32,6 +34,7 @@ jobs:
           # Mergeの１つ前の状態も確認するため、depth=2とする.
           fetch-depth: 2
       - name: Check the mod has diff.
+        id: check-mod-diff
         run: |
           diff_result=$(git diff --name-only \
             HEAD~ \
@@ -44,6 +47,7 @@ jobs:
           fi
           echo HAS_DIFF=${HAS_DIFF}
           echo "HAS_DIFF=$HAS_DIFF" >> $GITHUB_ENV
+          echo "::set-output name=has_diff::$HAS_DIFF"
       - name: Set env - git HEAD commit ID.
         if: ${{ env.HAS_DIFF == '1' }}
         run: |
@@ -117,12 +121,24 @@ jobs:
           git config --global user.email "tmp@example.com"
           git commit -m "Created new manifest in ${branch_name}"
           git push -u origin ${branch_name}
+      # - uses: actions/cache@v2
+      #   id: cache
+      #   with:
+      #     path: path/to/dependencies
+      #     key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
+  
+  create-pr-of-cluster:
+    needs: execute-unittest-and-upload
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      # - name: Download Artifacts
+      #   uses: actions/download-artifact@v2
+      #   with:
+      #     path: artifacts
+
       - name: Create PR to cluster repo. <- This should not be done in matrix.
         if: ${{ env.HAS_DIFF == '1' }}
         run: |
-          pwd
-      # - name: list files.
-      #   if: ${{ env.HAS_DIFF == '1' }}
-      #   run: |
-      #     pwd
-      #     ls -alR
+          echo ${{needs.execute-unittest-and-upload.outputs.has_diff}}
+
