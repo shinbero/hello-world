@@ -11,13 +11,10 @@ env:
   # Docker run する際のコンテナにリポジトリをマウントする先のパス
   # PATH_MOUNT: /workspaces/myapp
   PATH_CACHE: /tmp/has_diff
-  HAS_DIFF_2: '0'
 
 jobs:
   image-and-manifest-build-and-push:
     runs-on: ubuntu-latest
-    outputs:
-      has_diff: ${{ steps.check-mod-diff.outputs.has_diff }}
     strategy:
       matrix:
         modules:
@@ -54,8 +51,6 @@ jobs:
           fi
           echo HAS_DIFF=${HAS_DIFF}
           echo "HAS_DIFF=$HAS_DIFF" >> $GITHUB_ENV
-          echo "HAS_DIFF_2=$HAS_DIFF" >> $GITHUB_ENV
-          echo "::set-output name=has_diff::$HAS_DIFF"
       - name: Set env - git HEAD commit ID.
         if: ${{ env.HAS_DIFF == '1' }}
         run: |
@@ -136,14 +131,15 @@ jobs:
           key: ${{ github.action }}-has_diff
           # key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
       # - name: Write file to cache if has diff.
-      - name: Hogehoge
+      - name: Create cache dir if not exists yet.
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
           mkdir -p ${{ env.PATH_CACHE }}
 
-      - name: List cache dir
+      - name: Create flag file if had diff on mod.
         run: |
-          ls -alR ${{ env.PATH_CACHE }}
+          # ls -alR ${{ env.PATH_CACHE }}
+          touch ${{ env.PATH_CACHE }}/hoge.txt
 
   
   create-pr-of-cluster:
@@ -168,6 +164,5 @@ jobs:
       - name: Create PR to cluster repo. <- This should not be done in matrix.
         # if: ${{ env.HAS_DIFF == '1' }}
         run: |
-          echo ${{ env.HAS_DIFF_2 }}
-          echo ${{needs.image-and-manifest-build-and-push.outputs.has_diff}}
+          echo hello
 
