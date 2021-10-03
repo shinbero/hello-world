@@ -138,7 +138,7 @@ jobs:
       #     path: artifacts
 
       - name: Create PR to cluster repo. <- This should not be done in matrix.
-        if: ${{ env.HAS_DIFF == '1' }}
+        # if: ${{ env.HAS_DIFF == '1' }}
         run: |
           echo ${{needs.image-and-manifest-build-and-push.outputs.has_diff}}
 
