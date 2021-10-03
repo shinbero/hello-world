@@ -8,5 +8,5 @@ COPY exec_unittests.sh exec_code_review.sh ${APP_ROOT_DIR}/
 
 ENTRYPOINT ["/docker-entrypoint.sh"]
 
-# TODO:
-# CMDでk8s の cronjobで実行させたいコマンドを実行させる。
+# For APP_ROOT_DIR expansion, use sh -c to call python.
+CMD ["sh", "-c", "python ${APP_ROOT_DIR}/src/hi.py"]
