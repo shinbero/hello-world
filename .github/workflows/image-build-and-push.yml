@@ -14,6 +14,11 @@ jobs:
         modules:
           - mod_1
           - mod_2
+
+      # １つのブランチに対して複数のcommitをSequentialに追加したいので、
+      # 並列runを禁止する.
+      max-parallel: 1
+
     env:
       DOCKER_REGISTRY: daianatest.azurecr.io
     steps:
@@ -77,8 +82,13 @@ jobs:
         if: ${{ env.HAS_DIFF == '1' }}
         uses: actions/checkout@v2
         with:
+          fetch-depth: 0 # 既存のfeature branchを参照したい場合がある為.
           repository: 'shinbero/hello-world-cluster'
-          token: ${{ secrets.CLUSTER_REPO_TOKEN }} # For push??????????????
+
+          # 別repositryでPushもしたい場合は、
+          # このWorkflowのデフォルトのトークン(GITHUB_TOKEN)では403 errorとなる為,
+          # 対象repoにwrite権限があるTOKENを利用する.
+          token: ${{ secrets.CLUSTER_REPO_TOKEN }}
       - name: Create manifest of the mod.
         if: ${{ env.HAS_DIFF == '1' }}
         run: |
@@ -90,16 +100,23 @@ jobs:
       - name: Checkout to feature branch & commit & push to cluster repo.
         if: ${{ env.HAS_DIFF == '1' }}
         run: |
+          # Branch名は、どのActionで走ったか特定できるような名前にする.
           branch_name=${{ github.repository }}/actions/runs/${{ github.run_id }}
-          git checkout -b ${branch_name}
+
+          feature_branch_exists=(git branch -a | grep ${branch_name} || true)
+          if [ ! -z ${feature_branch_exists} ]; then
+            # The branch already exists.
+            git checkout ${branch_name}
+          else
+            # まだ対象のbranchが存在しないので、作成してcheckout.
+            git checkout -b ${branch_name}
+          fi
           git diff
           git add .
           git config --global user.name "tmp"
           git config --global user.email "tmp@example.com"
           git commit -m "Created new manifest in ${branch_name}"
-          git push -u \
-            https://${{ secrets.CLUSTER_REPO_USER }}:${{ secrets.CLUSTER_REPO_TOKEN }}@github.com/shinbero/hello-world-cluster.git \
-            ${branch_name}
+          git push -u origin ${branch_name}
       - name: Create PR to cluster repo. <- This should not be done in matrix.
         if: ${{ env.HAS_DIFF == '1' }}
         run: |
