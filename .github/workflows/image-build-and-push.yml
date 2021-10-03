@@ -7,7 +7,7 @@ on:
   #   branches:
   #     - main
 jobs:
-  Image-and-manifest-build-and-push:
+  image-and-manifest-build-and-push:
     runs-on: ubuntu-latest
     outputs:
       has_diff: ${{ steps.check-mod-diff.outputs.has_diff }}
@@ -128,7 +128,7 @@ jobs:
       #     key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
   
   create-pr-of-cluster:
-    needs: execute-unittest-and-upload
+    needs: image-and-manifest-build-and-push
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -140,5 +140,5 @@ jobs:
       - name: Create PR to cluster repo. <- This should not be done in matrix.
         if: ${{ env.HAS_DIFF == '1' }}
         run: |
-          echo ${{needs.execute-unittest-and-upload.outputs.has_diff}}
+          echo ${{needs.image-and-manifest-build-and-push.outputs.has_diff}}
 
