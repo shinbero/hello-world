@@ -8,10 +8,10 @@ on:
   #     - main
 
 env:
-  # Docker run する際のコンテナにリポジトリをマウントする先のパス
-  # PATH_MOUNT: /workspaces/myapp
   PATH_CACHE: /tmp/has_diff
 
+  # Branch名は、どのActionで走ったか特定できるような名前にする.
+  BRANCH_NAME: ${{ github.repository }}/actions/runs/${{ github.run_id }}
 jobs:
   image-and-manifest-build-and-push:
     runs-on: ubuntu-latest
@@ -24,7 +24,6 @@ jobs:
       # １つのブランチに対して複数のcommitをSequentialに追加したいので、
       # 並列runを禁止する.
       max-parallel: 1
-
     env:
       DOCKER_REGISTRY: daianatest.azurecr.io
     steps:
@@ -107,23 +106,20 @@ jobs:
       - name: Checkout to feature branch & commit & push to cluster repo.
         if: ${{ env.HAS_DIFF == '1' }}
         run: |
-          # Branch名は、どのActionで走ったか特定できるような名前にする.
-          branch_name=${{ github.repository }}/actions/runs/${{ github.run_id }}
-
-          feature_branch_exists=$(git branch -a | grep ${branch_name} || true)
+          feature_branch_exists=$(git branch -a | grep ${{ env.BRANCH_NAME }} || true)
           if [ ! -z ${feature_branch_exists} ]; then
             # The branch already exists.
-            git checkout ${branch_name}
+            git checkout ${{ env.BRANCH_NAME }}
           else
             # まだ対象のbranchが存在しないので、作成してcheckout.
-            git checkout -b ${branch_name}
+            git checkout -b ${{ env.BRANCH_NAME }}
           fi
           git diff
           git add .
           git config --global user.name "tmp"
           git config --global user.email "tmp@example.com"
-          git commit -m "Created new manifest in ${branch_name}"
-          git push -u origin ${branch_name}
+          git commit -m "Created new manifest in ${{ env.BRANCH_NAME }}"
+          git push -u origin ${{ env.BRANCH_NAME }}
       - uses: actions/cache@v2
         id: cache
         if: ${{ env.HAS_DIFF == '1' }}
@@ -136,14 +132,6 @@ jobs:
           ls_result=$(ls -alR ${{ env.PATH_CACHE }} || true)
           echo "${ls_result}"
           mkdir -p ${{ env.PATH_CACHE }}
-
-      # - name: Create flag file if had diff on mod.
-      #   if: ${{ env.HAS_DIFF == '1' }}
-      #   run: |
-      #     ls -alR ${{ env.PATH_CACHE }}
-      #     echo "Hello" > ${{ env.PATH_CACHE }}/${{ matrix.modules }}.txt
-      #     ls -alR ${{ env.PATH_CACHE }}
-
   
   create-pr-of-cluster:
     needs: image-and-manifest-build-and-push
@@ -167,5 +155,8 @@ jobs:
       - name: Create PR to cluster repo.
         if: ${{ env.HAS_DIFF == '1' }}
         run: |
-          echo hello
+          curl -X POST \
+          -H "Accept: application/vnd.github.v3+json" \
+          https://${{ secrets.CLUSTER_REPO_USER }}:${{ secrets.CLUSTER_REPO_TOKEN }}@api.github.com/repos/shinbero/hello-world-cluster/pulls \
+          -d '{"head":"${{ env.BRANCH_NAME }}","base":"main"}'
 
