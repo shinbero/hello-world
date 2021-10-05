@@ -3,6 +3,7 @@ def main():
 
 
 def add_2(num):
+    print(num)
     return num + 2
 
 
